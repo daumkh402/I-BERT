@@ -14,14 +14,12 @@ def make_dir(args, is_large, lr):
     log_name = '%s.log' % time
     ckpt_name = '%s_ckpt' % time
 
-    log_dir = os.path.join(root, args.quant_mode)
+    log_dir = os.path.join(root, 'none')
     log_dir = os.path.join(log_dir, task_dir)
     log_dir = os.path.join(log_dir, hyperparam_dir)
 
     log_file = os.path.join(log_dir, log_name)
-    ####
-    log_file = os.path.join(log_dir,args.iteration)
-    ####
+
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
@@ -54,13 +52,6 @@ def arg_parse():
                         choices=['RTE', 'SST-2', 'MNLI', 'QNLI',
                                  'CoLA', 'QQP', 'MRPC', 'STS-B',],
                         help='finetuning task')
-    parser.add_argument('--quant-mode', type=str,
-                        default='symmetric',
-                        choices=['none', 'symmetric',],
-                        help='quantization mode')
-    parser.add_argument('--force-dequant', type=str, default='none', 
-                        choices=['none', 'gelu', 'layernorm', 'softmax', 'nonlinear'],
-                        help='force dequantize the specific layers')
 
     parser.add_argument('--model-dir', type=str, default='models',
                         help='model directory')
@@ -69,7 +60,7 @@ def arg_parse():
     parser.add_argument('--restore-file', type=str, default=None,
                         help='finetuning from the given checkpoint')
     parser.add_argument('--no-save', action='store_true')
-    parser.add_argument('--iteration',type=str)
+
     args = parser.parse_args()
     return args
 
@@ -88,7 +79,7 @@ task_specs = {
         'total_num_updates': '2036',
         'warm_updates': '122',
     },
-    'SST-2' : {
+    'SST' : {
         'dataset': 'SST-2-bin',
         'num_classes': '2',
         'lr': '1e-5',
@@ -162,30 +153,17 @@ lr = str(args.lr) if args.lr else spec['lr']
 bs = str(args.bs) if args.bs else spec['max_sentences']
 
 log_file, ckpt_dir = make_dir(args, is_large, lr)
-model_path = args.model_dir  + '/roberta.large/model.pt' if is_large \
-        else args.model_dir + '/roberta.base/model.pt'
+if args.restore_file :
+    model_path = args.restore_file
+else:
+    model_path = args.model_dir  + '/roberta.large/model.pt' if is_large \
+            else args.model_dir + '/roberta.base/model.pt'
 
 valid_subset = 'valid' if task != 'MNLI' else 'valid,valid1'
-valid_interval_updates = None
-if 'valid_interval_sentences' in spec:
-    valid_interval_updates = \
-            str(int(int(spec['valid_interval_sentences']) / int(bs)))
 
 print('valid_subset:',valid_subset)
-print('valid_interval_updates:', valid_interval_updates)
 
 ###############################################################
-
-finetuning_args = []
-if args.quant_mode == 'symmetric':
-    warm_updates = '0' # no warm update for Q.A.finetuing
-    if args.restore_file is None:
-        raise Exception('please specify --restore-file for symmetric mode')
-    print("Finetuning from the checkpoint: %s" % args.restore_file)
-    finetuning_args.append('--restore-file')
-    finetuning_args.append(args.restore_file)
-    finetuning_args.append('--reset-lr-scheduler')
-
 
 subprocess_args = [
     'fairseq-train', dataset,
@@ -212,13 +190,7 @@ subprocess_args = [
     '--save-dir', ckpt_dir, 
     '--log-file', log_file,
     '--dropout', str(args.dropout), '--attention-dropout', str(args.attn_dropout),
-    '--quant-mode', args.quant_mode,
-    '--force-dequant', args.force_dequant,
 ]
-
-if valid_interval_updates is not None:
-    subprocess_args += \
-    ['--validate-interval-updates', valid_interval_updates]
 
 if args.no_save:
     subprocess_args += ['--no-save']
@@ -227,7 +199,5 @@ if args.task == 'sts':
     subprocess_args += ['--regression-target', '--best-checkpoint-metric', 'loss']
 else:
     subprocess_args.append('--maximize-best-checkpoint-metric')
-
-subprocess_args = subprocess_args + finetuning_args
 
 subprocess.call(subprocess_args)

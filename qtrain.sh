@@ -6,7 +6,7 @@ do
     do
         python run.py \
         --arch roberta_base \
-        --task MRPC \
+        --task CoLA \
         --restore-file  ../ssd/roberta.base/model.pt \
         --lr $lr \
         --no-save \

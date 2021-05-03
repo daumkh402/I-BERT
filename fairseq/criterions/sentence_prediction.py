@@ -11,6 +11,7 @@ import torch.nn.functional as F
 from fairseq import metrics, utils
 from fairseq.criterions import FairseqCriterion, register_criterion
 
+import pdb; import math
 
 @register_criterion('sentence_prediction')
 class SentencePredictionCriterion(FairseqCriterion):
@@ -19,6 +20,7 @@ class SentencePredictionCriterion(FairseqCriterion):
         super().__init__(task)
         self.classification_head_name = classification_head_name
         self.regression_target = regression_target
+        self.task = task
 
     @staticmethod
     def add_args(parser):
@@ -94,13 +96,19 @@ class SentencePredictionCriterion(FairseqCriterion):
             tn = sum(log.get('tn', 0) for log in logging_outputs)
             fp = sum(log.get('fp', 0) for log in logging_outputs)
             fn = sum(log.get('fn', 0) for log in logging_outputs)
+
+
             metrics.log_scalar('accuracy', 100.0 * ncorrect / nsentences, nsentences, round=1)
             #metrics.log_scalar('f1', tp * 100.0 / (tp + 0.5 * false), tp + 0.5 * false , round=1)
             metrics.log_scalar('tp', 1. * tp, 1., round=1, sum_meter=True)
             metrics.log_scalar('tn', 1. * tn, 1., round=1, sum_meter=True)
             metrics.log_scalar('fp', 1. * fp, 1., round=1, sum_meter=True)
-            metrics.log_scalar('fp', 1. * fp, 1., round=1, sum_meter=True)
+            # metrics.log_scalar('fp', 1. * fp, 1., round=1, sum_meter=True)  ##?
+            metrics.log_scalar('fn', 1. * fn, 1., round=1, sum_meter=True)
+
+
             metrics.log_scalar('false', 1. * false, 1., round=1, sum_meter=True)
+
 
     @staticmethod
     def logging_outputs_can_be_summed() -> bool:

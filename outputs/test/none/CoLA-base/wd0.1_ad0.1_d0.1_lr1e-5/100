@@ -1,0 +1,3 @@
+Epoch 1: OrderedDict([('loss', 0.7), ('nll_loss', 0.06), ('accuracy', 79.3), ('tp', 145.0), ('tn', 682.0), ('fp', 39.0), ('fn', 177.0), ('false', 216.0), ('wps', 9999.1), ('wpb', 183.7), ('bsz', 15.8), ('num_updates', 535), ('mcc', 48.02035802321484)])
+Epoch 1: OrderedDict([('loss', 0.633), ('nll_loss', 0.054), ('accuracy', 80.2), ('tp', 170.0), ('tn', 666.0), ('fp', 55.0), ('fn', 152.0), ('false', 207.0), ('wps', 10330.0), ('wpb', 183.7), ('bsz', 15.8), ('num_updates', 535), ('mcc', 50.727840455548204)])
+Epoch 1: OrderedDict([('loss', 0.782), ('nll_loss', 0.067), ('accuracy', 78.6), ('tp', 140.0), ('tn', 680.0), ('fp', 41.0), ('fn', 182.0), ('false', 223.0), ('wps', 9672.8), ('wpb', 183.7), ('bsz', 15.8), ('num_updates', 535), ('mcc', 46.09982129120627)])

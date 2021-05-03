@@ -20,6 +20,10 @@ def make_dir(args, is_large, lr):
 
     log_file = os.path.join(log_dir, log_name)
 
+    ####
+    log_file = os.path.join(log_dir,args.iteration)
+    ####
+
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
@@ -42,7 +46,7 @@ def arg_parse():
     parser.add_argument('--dropout', type=float, default=0.1)
     parser.add_argument('--weight-decay', type=float, default=0.1)
     parser.add_argument('--lr', type=float, default=None)
-    parser.add_argument('--max-epochs', type=int, default=None)
+    parser.add_argument('--max_epoch', type=str, default=None)
     parser.add_argument('--bs', type=float, default=None, help='batch size')
 
     parser.add_argument('--arch', type=str, default='roberta_base',
@@ -60,7 +64,10 @@ def arg_parse():
     parser.add_argument('--restore-file', type=str, default=None,
                         help='finetuning from the given checkpoint')
     parser.add_argument('--no-save', action='store_true')
-
+    ###
+    parser.add_argument('--iteration',type=str)
+    parser.add_argument('--seed',type=str)
+    ###
     args = parser.parse_args()
     return args
 
@@ -79,7 +86,7 @@ task_specs = {
         'total_num_updates': '2036',
         'warm_updates': '122',
     },
-    'SST' : {
+    'SST-2' : {
         'dataset': 'SST-2-bin',
         'num_classes': '2',
         'lr': '1e-5',
@@ -125,10 +132,10 @@ task_specs = {
     'MRPC' : {
         'dataset': 'MRPC-bin',
         'num_classes': '2',
-        'lr': '1e-5',
-        'max_sentences': '16',
-        'total_num_updates': '2296',
-        'warm_updates': '137'
+        'lr': '2e-5',                       #1e-5
+        'max_sentences': '32',              #16
+        'total_num_updates': '1148',        #2296
+        'warm_updates': '68'               #137
     },
     'STS-B' : {
         'dataset': 'STS-B-bin',
@@ -136,7 +143,7 @@ task_specs = {
         'lr': '2e-5',
         'max_sentences': '16',
         'total_num_updates': '3598',
-        'warm_updates': '214'
+        'warm_updates': '214',
     },
 }
 
@@ -159,6 +166,24 @@ model_path = args.model_dir  + '/roberta.large/model.pt' if is_large \
 valid_subset = 'valid' if task != 'MNLI' else 'valid,valid1'
 
 print('valid_subset:',valid_subset)
+
+#######
+if args.task in ["SST-2", "RTE", "QNLI", "MNLI"]:
+    best_metric = 'accuracy'
+
+if args.task in ["MRPC", "QQP"]:
+    best_metric = "f1"
+
+if args.task == "CoLA":
+    best_metric = 'mcc'
+
+if args.task == "STS-B":
+    best_metric = 'loss'
+
+if args.max_epoch is not None:
+    max_epochs = args.max_epoch
+
+#######
 
 ###############################################################
 
@@ -183,10 +208,11 @@ subprocess_args = [
     '--total-num-update', total_num_updates, '--warmup-updates', warm_updates,
     '--max-epoch',  max_epochs,
     '--find-unused-parameters',  
-    '--best-checkpoint-metric', 'accuracy', 
+    '--best-checkpoint-metric', best_metric, 
     '--save-dir', ckpt_dir, 
     '--log-file', log_file,
     '--dropout', str(args.dropout), '--attention-dropout', str(args.attn_dropout),
+    '--seed', args.seed,
 ]
 
 if args.no_save:
@@ -196,5 +222,13 @@ if args.task == 'sts':
     subprocess_args += ['--regression-target', '--best-checkpoint-metric', 'loss']
 else:
     subprocess_args.append('--maximize-best-checkpoint-metric')
+
+
+#####
+
+# os.environ['PYTHONHASHEED']=str(args.seed)
+
+#####
+
 
 subprocess.call(subprocess_args)

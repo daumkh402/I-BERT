@@ -78,7 +78,6 @@ def main(args):
             sum(p.numel() for p in model.parameters() if p.requires_grad),
         )
     )
-    logger.info("quantize: {}".format(args.quant_mode))
 
     # (optionally) Configure quantization
     if args.quantization_config_path is not None:
@@ -212,8 +211,7 @@ def train(args, trainer, task, epoch_itr):
 
         end_of_epoch = not itr.has_next()
         valid_losses, should_stop = validate_and_save(
-            args, trainer, task, epoch_itr, valid_subsets, end_of_epoch,
-            num_iter=i
+            args, trainer, task, epoch_itr, valid_subsets, end_of_epoch
         )
 
         if should_stop:
@@ -229,7 +227,7 @@ def train(args, trainer, task, epoch_itr):
     return valid_losses, should_stop
 
 
-def validate_and_save(args, trainer, task, epoch_itr, valid_subsets, end_of_epoch, num_iter=-1):
+def validate_and_save(args, trainer, task, epoch_itr, valid_subsets, end_of_epoch):
     num_updates = trainer.get_num_updates()
     do_save = (
         args.save_interval_updates > 0
@@ -240,9 +238,7 @@ def validate_and_save(args, trainer, task, epoch_itr, valid_subsets, end_of_epoc
     do_validate = (
         (not end_of_epoch and do_save)  # validate during mid-epoch saves
         or (end_of_epoch and epoch_itr.epoch % args.validate_interval == 0)
-        #or (args.validate_interval_updates > 0 and num_updates % args.validate_interval_updates == 0)
-        or (args.validate_interval_updates > 0 and \
-            num_iter > 0 and num_iter % args.validate_interval_updates == 0)
+        or (args.validate_interval_updates > 0 and num_updates % args.validate_interval_updates == 0)
     ) and not args.disable_validation
 
     # Validate
@@ -309,6 +305,8 @@ def validate(args, trainer, task, epoch_itr, subsets):
 
         # log validation stats
         stats = get_valid_stats(args, trainer, agg.get_smoothed_values())
+
+
         progress.print(stats, tag=subset, step=trainer.get_num_updates())
         if args.log_file is not None:
             with open(args.log_file, "a") as logfile:
@@ -323,9 +321,10 @@ def get_valid_stats(args, trainer, stats):
     if hasattr(checkpoint_utils.save_checkpoint, "best"):
         key = "best_{0}".format(args.best_checkpoint_metric)
         best_function = max if args.maximize_best_checkpoint_metric else min
-        stats[key] = best_function(
-            checkpoint_utils.save_checkpoint.best, stats[args.best_checkpoint_metric]
-        )
+        if args.best_checkpoint_metric == 'accuracy':
+            stats[key] = best_function(
+                checkpoint_utils.save_checkpoint.best, stats[args.best_checkpoint_metric]
+            )
     return stats
 
 

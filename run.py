@@ -132,10 +132,10 @@ task_specs = {
     'MRPC' : {
         'dataset': 'MRPC-bin',
         'num_classes': '2',
-        'lr': '2e-5',                       #1e-5
-        'max_sentences': '32',              #16
-        'total_num_updates': '1148',        #2296
-        'warm_updates': '68'               #137
+        'lr': '1e-5',                       #1e-5
+        'max_sentences': '16',              #16
+        'total_num_updates': '2296',        #2296
+        'warm_updates': '137'               #137
     },
     'STS-B' : {
         'dataset': 'STS-B-bin',

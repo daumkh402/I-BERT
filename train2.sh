@@ -3,7 +3,7 @@ ROBERTA_PATH=./robera.base/model.pt
 
 for task in "MRPC" 
 do
-for i in 11 12 13
+for i in 21 22 23 
 do
 python run.py \
 --arch roberta_base \

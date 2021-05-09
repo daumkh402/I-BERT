@@ -28,6 +28,7 @@ from fairseq.logging import meters, metrics, progress_bar
 from fairseq.model_parallel.megatron_trainer import MegatronTrainer
 from fairseq.trainer import Trainer
 
+import pdb
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
@@ -40,6 +41,14 @@ logger = logging.getLogger("fairseq_cli.train")
 
 def main(args):
     utils.import_user_module(args)
+
+    #################################################################################
+    import wandb
+    wandb.init(name=args.wandb_run_name, project=args.wandb_project_name, dir='../ssd/')
+    # args.validate_interval_updates = 100
+    # validate_after_updates
+    # validate_interval
+    #################################################################################
 
     assert (
         args.max_tokens is not None or args.max_sentences is not None
@@ -210,9 +219,16 @@ def train(args, trainer, task, epoch_itr):
                 metrics.reset_meters("train_inner")
 
         end_of_epoch = not itr.has_next()
-        valid_losses, should_stop = validate_and_save(
+        valid_losses, should_stop, eval_loss = validate_and_save(
             args, trainer, task, epoch_itr, valid_subsets, end_of_epoch
         )
+
+        #####################
+
+        wandb.log({'step_count' : num_updates, 'train loss' : log_output['loss'] })
+        if valid_losses[0] is not None:
+            wandb.log({'step_count' : num_updates, 'valid_loss' : eval_loss, 'valid_score' : valid_losses[0]})
+        #####################
 
         if should_stop:
             break
@@ -243,6 +259,7 @@ def validate_and_save(args, trainer, task, epoch_itr, valid_subsets, end_of_epoc
 
     # Validate
     valid_losses = [None]
+    eval_loss = None
     if do_validate:
         valid_losses = validate(args, trainer, task, epoch_itr, valid_subsets)
 
@@ -262,7 +279,7 @@ def validate_and_save(args, trainer, task, epoch_itr, valid_subsets, end_of_epoc
         logger.info("begin save checkpoint")
         checkpoint_utils.save_checkpoint(args, trainer, epoch_itr, valid_losses[0])
 
-    return valid_losses, should_stop
+    return valid_losses, should_stop, eval_loss
 
 
 def get_training_stats(stats):
@@ -301,7 +318,7 @@ def validate(args, trainer, task, epoch_itr, subsets):
         # don't pollute other aggregators (e.g., train meters)
         with metrics.aggregate(new_root=True) as agg:
             for sample in progress:
-                trainer.valid_step(sample)
+                _, eval_loss = trainer.valid_step(sample)
 
         # log validation stats
         stats = get_valid_stats(args, trainer, agg.get_smoothed_values())
@@ -313,18 +330,31 @@ def validate(args, trainer, task, epoch_itr, subsets):
                 logfile.write("Epoch %s: %s\n" % (str(epoch_itr.epoch), str(stats)))
 
         valid_losses.append(stats[args.best_checkpoint_metric])
-    return valid_losses
+    return valid_losses, eval_loss
 
 
 def get_valid_stats(args, trainer, stats):
     stats["num_updates"] = trainer.get_num_updates()
+    #################################################################################
+    if args.best_checkpoint_metric == 'f1':
+        tn = stats['tn']; tp = stats['tp']; fp = stats['fp']; fn = stats['fn']
+        f1 = 100 * tp / (tp + 0.5 * (fp + fn))
+        stats['f1'] = f1
+
+    if args.best_checkpoint_metric == 'mcc':
+        tn = stats['tn']; tp = stats['tp']; fp = stats['fp']; fn = stats['fn']
+        n = tn + tp + fn + fp
+        s = (tp + fn) / float(n)
+        p = (tp + fp) / float(n)
+        mcc = 100 * (tp / float(n) - s * p) / math.sqrt(p*s*(1-s)*(1-p))
+        stats['mcc'] = mcc       
+    #################################################################################
     if hasattr(checkpoint_utils.save_checkpoint, "best"):
         key = "best_{0}".format(args.best_checkpoint_metric)
         best_function = max if args.maximize_best_checkpoint_metric else min
-        if args.best_checkpoint_metric == 'accuracy':
-            stats[key] = best_function(
-                checkpoint_utils.save_checkpoint.best, stats[args.best_checkpoint_metric]
-            )
+        stats[key] = best_function(
+            checkpoint_utils.save_checkpoint.best, stats[args.best_checkpoint_metric]
+        )
     return stats
 
 

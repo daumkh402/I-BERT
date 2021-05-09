@@ -225,6 +225,10 @@ def get_parser(desc, default_task="translation"):
     utils.import_user_module(usr_args)
 
     parser = argparse.ArgumentParser(allow_abbrev=False)
+    ###########
+    parser.add_argument('--wandb_project_name', type=str)
+    parser.add_argument('--wandb_run_name', type=str)
+    ############
     # fmt: off
     parser.add_argument('--no-progress-bar', action='store_true', help='disable progress bar')
     parser.add_argument('--log-interval', type=int, default=100, metavar='N',

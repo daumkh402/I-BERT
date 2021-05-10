@@ -668,7 +668,7 @@ class Trainer(object):
         # log validation stats
         logging_output = self._reduce_and_log_stats(logging_outputs, sample_size)
 
-        return logging_output
+        return logging_output, _loss
 
     def zero_grad(self):
         self.optimizer.zero_grad()

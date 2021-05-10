@@ -202,9 +202,7 @@ if args.max_epochs is not None:
 total_num_updates = args.total_num_updates
 
 
-valid_interval_updates = str(int(int(spec['valid_interval_sentences']) / int(bs))) \
-                            if 'valid_interval_sentences' in spec \
-                            else str(int(int(total_num_updates) / 50))
+valid_interval_updates = str(int(int(total_num_updates) / 100))
 
 ###############################################################
 

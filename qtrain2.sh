@@ -1,10 +1,10 @@
 #export CUDA_VISIBLE_DEVICES=''
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=1
 
 wandb_project="IBERT_8bit_reproduce"
 
 
-for task in  "MRPC" #"RTE" "CoLA"
+for task in  "RTE" 
 do
 
 for bs in 4 16

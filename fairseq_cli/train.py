@@ -234,7 +234,8 @@ def train(args, trainer, task, epoch_itr):
         #print('train loss', log_output['loss']
         wandb.log({'step_count' : num_updates, 'train loss' : log_output['loss'] })
         if valid_losses[0] is not None:
-            wandb.log({'step_count' : num_updates, 'valid_loss' : eval_loss, 'valid_score' : valid_losses[0]})
+            #import pdb; pdb.set_trace()
+            wandb.log({'step_count' : num_updates, 'valid_loss' : eval_loss.item(), 'valid_score' : valid_losses[0]})
         ####################################################################################
 
         if should_stop:
@@ -268,7 +269,7 @@ def validate_and_save(args, trainer, task, epoch_itr, valid_subsets, end_of_epoc
     valid_losses = [None]
     eval_loss = None
     if do_validate:
-        valid_losses = validate(args, trainer, task, epoch_itr, valid_subsets)
+        valid_losses,eval_loss = validate(args, trainer, task, epoch_itr, valid_subsets)
 
     # Stopping conditions
     max_update = args.max_update or math.inf

@@ -38,17 +38,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger("fairseq_cli.train")
 
-
+import wandb
 def main(args):
     utils.import_user_module(args)
 
-    #################################################################################
-    #import wandb
-    #wandb.init(name=args.wandb_run_name, project=args.wandb_project_name, dir='../ssd/')
-    # args.validate_interval_updates = 100
-    # validate_after_updates
-    # validate_interval
-    #################################################################################
 
     assert (
         args.max_tokens is not None or args.max_sentences is not None
@@ -63,7 +56,7 @@ def main(args):
         checkpoint_utils.verify_checkpoint_directory(args.save_dir)
 
     # Print args
-    logger.info(args)
+    # logger.info(args)
 
     # Setup task, e.g., translation, language modeling, etc.
     task = tasks.setup_task(args)
@@ -87,6 +80,19 @@ def main(args):
             sum(p.numel() for p in model.parameters() if p.requires_grad),
         )
     )
+
+    #################################################################################
+    wandb.init(name=args.wandb_run_name, project=args.wandb_project_name, dir='../ssd/')
+    #args.validate_interval_updates = 100
+    # validate_after_updates
+    # validate_interval
+
+    logger.info(args)
+    # pdb.set_trace()
+    #################################################################################
+    
+
+
 
     # (optionally) Configure quantization
     if args.quantization_config_path is not None:
@@ -223,12 +229,13 @@ def train(args, trainer, task, epoch_itr):
             args, trainer, task, epoch_itr, valid_subsets, end_of_epoch
         )
 
-        #####################
-
-        #wandb.log({'step_count' : num_updates, 'train loss' : log_output['loss'] })
-        #if valid_losses[0] is not None:
-        #    wandb.log({'step_count' : num_updates, 'valid_loss' : eval_loss, 'valid_score' : valid_losses[0]})
-        #####################
+        ####################################################################################
+        #print('step_count',  num_updates) 
+        #print('train loss', log_output['loss']
+        wandb.log({'step_count' : num_updates, 'train loss' : log_output['loss'] })
+        if valid_losses[0] is not None:
+            wandb.log({'step_count' : num_updates, 'valid_loss' : eval_loss, 'valid_score' : valid_losses[0]})
+        ####################################################################################
 
         if should_stop:
             break

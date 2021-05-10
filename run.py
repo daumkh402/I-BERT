@@ -19,7 +19,9 @@ def make_dir(args, is_large, lr):
     log_dir = os.path.join(log_dir, hyperparam_dir)
 
     log_file = os.path.join(log_dir, log_name)
-
+    ####
+    log_file = os.path.join(log_dir,args.iteration)
+    ####
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
@@ -42,8 +44,8 @@ def arg_parse():
     parser.add_argument('--dropout', type=float, default=0.1)
     parser.add_argument('--weight-decay', type=float, default=0.1)
     parser.add_argument('--lr', type=float, default=None)
-    parser.add_argument('--max-epochs', type=int, default=None)
-    parser.add_argument('--bs', type=float, default=None, help='batch size')
+    parser.add_argument('--max-epochs', type=str, default=None)
+    parser.add_argument('--bs', type=int, default=None, help='batch size')
 
     parser.add_argument('--arch', type=str, default='roberta_base',
                         choices=['roberta_base', 'roberta_large', ],
@@ -52,7 +54,6 @@ def arg_parse():
                         choices=['RTE', 'SST-2', 'MNLI', 'QNLI',
                                  'CoLA', 'QQP', 'MRPC', 'STS-B',],
                         help='finetuning task')
-#============================ QUANTIZATION  ============================#
     parser.add_argument('--quant-mode', type=str,
                         default='symmetric',
                         choices=['none', 'symmetric',],
@@ -60,7 +61,6 @@ def arg_parse():
     parser.add_argument('--force-dequant', type=str, default='none', 
                         choices=['none', 'gelu', 'layernorm', 'softmax', 'nonlinear'],
                         help='force dequantize the specific layers')
-#============================ QUANTIZATION  ============================#
 
     parser.add_argument('--model-dir', type=str, default='models',
                         help='model directory')
@@ -70,6 +70,13 @@ def arg_parse():
                         help='finetuning from the given checkpoint')
     parser.add_argument('--no-save', action='store_true')
 
+    ###
+    parser.add_argument('--iteration',type=str)
+    parser.add_argument('--seed',type=str)
+    parser.add_argument('--wandb_project_name',type=str)
+    parser.add_argument('--wandb_run_name',type=str)
+    parser.add_argument('--total_num_updates',type=str)
+    ###
     args = parser.parse_args()
     return args
 
@@ -176,6 +183,31 @@ print('valid_interval_updates:', valid_interval_updates)
 
 ###############################################################
 
+#######
+if args.task in ["SST-2", "RTE", "QNLI", "MNLI"]:
+    best_metric = 'accuracy'
+
+if args.task in ["MRPC", "QQP"]:
+    best_metric = "f1"
+
+if args.task == "CoLA":
+    best_metric = 'mcc'
+
+if args.task == "STS-B":
+    best_metric = 'loss'
+
+if args.max_epochs is not None:
+    max_epochs = args.max_epochs
+
+total_num_updates = args.total_num_updates
+
+
+valid_interval_updates = str(int(int(spec['valid_interval_sentences']) / int(bs))) \
+                            if 'valid_interval_sentences' in spec \
+                            else str(int(int(total_num_updates) / 50))
+
+###############################################################
+
 finetuning_args = []
 if args.quant_mode == 'symmetric':
     warm_updates = '0' # no warm update for Q.A.finetuing
@@ -214,6 +246,10 @@ subprocess_args = [
     '--dropout', str(args.dropout), '--attention-dropout', str(args.attn_dropout),
     '--quant-mode', args.quant_mode,
     '--force-dequant', args.force_dequant,
+    ######
+    '--wandb_project_name', args.wandb_project_name,
+    '--wandb_run_name', args.wandb_run_name
+    #####
 ]
 
 if valid_interval_updates is not None:

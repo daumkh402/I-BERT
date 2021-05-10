@@ -1,31 +1,56 @@
-export CUDA_VISIBLE_DEVICES=''
-#export CUDA_VISIBLE_DEVICES=2 
-ROBERTA_PATH=./robera.base/model.pt
+#export CUDA_VISIBLE_DEVICES=''
+export CUDA_VISIBLE_DEVICES=3
 
-wandb_project="ibert_test"
-wandb_run="MRPC_QUANT"
-for task in  "MRPC" #"RTE" #"QQP" #"CoLA" #"QQP" #"CoLA" #"SST-2" #"QQP" #"RTE" 
+wandb_project="IBERT_8bit_reproduce"
+
+
+for task in  "SST-2" #"MRPC" "RTE" "CoLA"
 do
 
-for i in 100
+for bs in 16 32 #4 18
 do
-python run.py \
---arch roberta_base \
---task $task \
---restore-file  ../ssd/roberta.base/model.pt \
---lr 1e-7 \
---no-save
 
-#--wandb_project_name $wandb_project \
-#--wandb_run_name $wandb_run \
-#--max-epochs 2
-#--seed $RANDOM \
-#--iteration $i \
+for max_epochs in 12 18
+do
+
+for lr in 2e-5 1e-5 1.5e-5
+do
+
+for weight_decay in 0.1
+do
+
+    case $task in 
+    MRPC) size=3668;;				
+    RTE) size=2490;;
+    CoLA) size=8551;;
+    SST-2) size=67349;;
+    esac 
+    total_num_updates=$(( ${size} * $(($max_epochs - 2)) / ${bs}))
+
+    for i in 1 2 3
+    do
+    wandb_run="${task}_bs${bs}_epoch${max_epochs}_lr${lr}_${i}"
+    python run.py \
+    --arch roberta_base \
+    --task $task \
+    --restore-file  ../ssd/models/roberta.base/model.pt \
+    --no-save \
+    --wandb_project_name $wandb_project \
+    --wandb_run_name $wandb_run \
+    --seed $RANDOM \
+    --iteration $i \
+    --total_num_updates $total_num_updates \
+    --lr $lr \
+    --max-epochs $max_epochs \
+    --bs $bs \
+    --weight-decay $weight_decay
+    done
+
 done
-
 done
-
-
+done
+done
+done
 # for lr in 5e-7 1e-6 1.5e-6 2e-6
 # do
 # done

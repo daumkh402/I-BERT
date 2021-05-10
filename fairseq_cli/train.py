@@ -43,8 +43,8 @@ def main(args):
     utils.import_user_module(args)
 
     #################################################################################
-    import wandb
-    wandb.init(name=args.wandb_run_name, project=args.wandb_project_name, dir='../ssd/')
+    #import wandb
+    #wandb.init(name=args.wandb_run_name, project=args.wandb_project_name, dir='../ssd/')
     # args.validate_interval_updates = 100
     # validate_after_updates
     # validate_interval
@@ -225,9 +225,9 @@ def train(args, trainer, task, epoch_itr):
 
         #####################
 
-        wandb.log({'step_count' : num_updates, 'train loss' : log_output['loss'] })
-        if valid_losses[0] is not None:
-            wandb.log({'step_count' : num_updates, 'valid_loss' : eval_loss, 'valid_score' : valid_losses[0]})
+        #wandb.log({'step_count' : num_updates, 'train loss' : log_output['loss'] })
+        #if valid_losses[0] is not None:
+        #    wandb.log({'step_count' : num_updates, 'valid_loss' : eval_loss, 'valid_score' : valid_losses[0]})
         #####################
 
         if should_stop:

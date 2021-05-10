@@ -1,4 +1,5 @@
-export CUDA_VISIBLE_DEVICES=3 
+export CUDA_VISIBLE_DEVICES=''
+#export CUDA_VISIBLE_DEVICES=2 
 ROBERTA_PATH=./robera.base/model.pt
 
 wandb_project="ibert_test"
@@ -12,13 +13,14 @@ python run.py \
 --arch roberta_base \
 --task $task \
 --restore-file  ../ssd/roberta.base/model.pt \
---iteration $i \
---seed $RANDOM \
---no-save \
---wandb_project_name $wandb_project \
---wandb_run_name $wandb_run \
---max-epochs 2
+--lr 1e-7 \
+--no-save
 
+#--wandb_project_name $wandb_project \
+#--wandb_run_name $wandb_run \
+#--max-epochs 2
+#--seed $RANDOM \
+#--iteration $i \
 done
 
 done

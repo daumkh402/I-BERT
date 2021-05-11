@@ -202,7 +202,7 @@ if args.max_epochs is not None:
 total_num_updates = args.total_num_updates
 
 
-valid_interval_updates = str(int(int(total_num_updates) / 100))
+valid_interval_updates = str(int(int(total_num_updates) / 50))
 
 ###############################################################
 
@@ -238,7 +238,7 @@ subprocess_args = [
     '--total-num-update', total_num_updates, '--warmup-updates', warm_updates,
     '--max-epoch',  max_epochs,
     '--find-unused-parameters',  
-    '--best-checkpoint-metric', 'accuracy', 
+    '--best-checkpoint-metric', best_metric, 
     '--save-dir', ckpt_dir, 
     '--log-file', log_file,
     '--dropout', str(args.dropout), '--attention-dropout', str(args.attn_dropout),

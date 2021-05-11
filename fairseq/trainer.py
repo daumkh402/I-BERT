@@ -664,7 +664,8 @@ class Trainer(object):
             logging_outputs, (sample_size, ) = self._aggregate_logging_outputs(
                 logging_outputs, sample_size, ignore=is_dummy_batch,
             )
-
+	
+        #import pdb; pdb.set_trace()
         # log validation stats
         logging_output = self._reduce_and_log_stats(logging_outputs, sample_size)
 

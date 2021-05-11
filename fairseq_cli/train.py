@@ -82,8 +82,8 @@ def main(args):
     )
 
     #################################################################################
-    wandb.init(name=args.wandb_run_name, project=args.wandb_project_name, dir='../ssd/')
-    #args.validate_interval_updates = 100
+    wandb.init(entity="johnbert",name=args.wandb_run_name, project=args.wandb_project_name, dir='../ssd/')
+    args.validate_interval_updates = 100
     # validate_after_updates
     # validate_interval
 
@@ -233,7 +233,11 @@ def train(args, trainer, task, epoch_itr):
         #print('step_count',  num_updates) 
         #print('train loss', log_output['loss']
         wandb.log({'step_count' : num_updates, 'train loss' : log_output['loss'] })
-        if valid_losses[0] is not None:
+        
+        if valid_losses[0] is None:
+            pass
+            #wandb.log({'step_count' : num_updates, 'valid_loss' : eval_loss.item()})
+        else:
             #import pdb; pdb.set_trace()
             wandb.log({'step_count' : num_updates, 'valid_loss' : eval_loss.item(), 'valid_score' : valid_losses[0]})
         ####################################################################################
@@ -325,6 +329,7 @@ def validate(args, trainer, task, epoch_itr, subsets):
         # create a new root metrics aggregator so validation metrics
         # don't pollute other aggregators (e.g., train meters)
         with metrics.aggregate(new_root=True) as agg:
+            #import pdb;pdb.set_trace()
             for sample in progress:
                 _, eval_loss = trainer.valid_step(sample)
 
@@ -346,16 +351,29 @@ def get_valid_stats(args, trainer, stats):
     #################################################################################
     if args.best_checkpoint_metric == 'f1':
         tn = stats['tn']; tp = stats['tp']; fp = stats['fp']; fn = stats['fn']
-        f1 = 100 * tp / (tp + 0.5 * (fp + fn))
-        stats['f1'] = f1
+        
+        d = tp + 0.5 * (fp + fn)
+        if d == 0:
+            stats['f1'] = None
+        else:
+            f1 = 100 * tp / d
+            stats['f1'] = f1    
+        
 
     if args.best_checkpoint_metric == 'mcc':
         tn = stats['tn']; tp = stats['tp']; fp = stats['fp']; fn = stats['fn']
         n = tn + tp + fn + fp
         s = (tp + fn) / float(n)
         p = (tp + fp) / float(n)
-        mcc = 100 * (tp / float(n) - s * p) / math.sqrt(p*s*(1-s)*(1-p))
-        stats['mcc'] = mcc       
+
+        d = math.sqrt(p * s * (1-s) * (1-p))
+        n = tp / float(n) - s * p
+        
+        if d == 0:
+          stats['mcc'] = None
+        else:
+          mcc = 100 * n / d
+          stats['mcc'] = mcc       
     #################################################################################
     if hasattr(checkpoint_utils.save_checkpoint, "best"):
         key = "best_{0}".format(args.best_checkpoint_metric)

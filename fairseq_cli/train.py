@@ -83,7 +83,7 @@ def main(args):
 
     #################################################################################
     wandb.init(entity="johnbert",name=args.wandb_run_name, project=args.wandb_project_name, dir='../ssd/')
-    args.validate_interval_updates = 100
+    #args.validate_interval_updates = 100
     # validate_after_updates
     # validate_interval
 

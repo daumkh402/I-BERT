@@ -1,19 +1,19 @@
 #export CUDA_VISIBLE_DEVICES=''
 export CUDA_VISIBLE_DEVICES=1
 
-wandb_project="IBERT_8bit_reproduce"
+wandb_project="0514_IBERT_8bit_reproduce"
 
 
 for task in  "RTE" 
 do
 
-for bs in 4 16
+for bs in 16
 do
 
-for max_epochs in 18
+for max_epochs in 12
 do
 
-for lr in 2e-5 1e-5 1.5e-5
+for lr in  1.5e-5 #2e-5
 do
 
 for weight_decay in 0.1

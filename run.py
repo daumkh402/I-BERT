@@ -245,6 +245,7 @@ subprocess_args = [
     '--quant-mode', args.quant_mode,
     '--force-dequant', args.force_dequant,
     ######
+    '--seed', args.seed,
     '--wandb_project_name', args.wandb_project_name,
     '--wandb_run_name', args.wandb_run_name
     #####

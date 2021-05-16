@@ -28,7 +28,7 @@ from fairseq.logging import meters, metrics, progress_bar
 from fairseq.model_parallel.megatron_trainer import MegatronTrainer
 from fairseq.trainer import Trainer
 
-
+import pdb
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
@@ -65,6 +65,22 @@ def main(args):
 
     # Build model and criterion
     model = task.build_model(args)
+    
+    pdb.set_trace()
+    ######
+    if args.softmax_type is not None :
+        if args.softmax_type == 'nn' or args.softmax_type == 'lut' :
+            data_dict = dict()
+            exp_dict = torch.load(args.exp_filename)
+            div_dict = torch.load(args.div_filename)
+            data_dict['exp_dict'] = exp_dict
+            data_dict['div_dict'] = div_dict
+        else :
+            data_dict = None
+        model.set_softmax(args.softmax_type, data_dict)
+
+    ######
+
     criterion = task.build_criterion(args)
     logger.info(model)
     logger.info("task: {} ({})".format(args.task, task.__class__.__name__))

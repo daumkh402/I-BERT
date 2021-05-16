@@ -67,10 +67,16 @@ def arg_parse():
     ###
     parser.add_argument('--iteration',type=str)
     parser.add_argument('--seed',type=str)
+    parser.add_argument('--softmax_type' , type=str)
+    parser.add_argument('--exp_filename' , type=str)
+    parser.add_argument('--div_filename' , type=str)
+    ###
     ###
     args = parser.parse_args()
     return args
 
+import pdb
+pdb.set_trace()
 args = arg_parse()
 task = args.task
 
@@ -213,6 +219,11 @@ subprocess_args = [
     '--log-file', log_file,
     '--dropout', str(args.dropout), '--attention-dropout', str(args.attn_dropout),
     '--seed', args.seed,
+    ######
+    '--softmax_type' , args.softmax_type,
+    '--exp_filename' , args.exp_filename,
+    '--div_filename' , args.div_filename,
+    #####
 ]
 
 if args.no_save:

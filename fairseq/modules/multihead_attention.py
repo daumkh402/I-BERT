@@ -16,6 +16,12 @@ from fairseq.incremental_decoding_utils import with_incremental_state
 from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 
+######
+from fairseq.modules.softmax.mysoftmax import MySoftmax
+my=True
+######
+
+
 
 @with_incremental_state
 class MultiheadAttention(nn.Module):
@@ -82,6 +88,12 @@ class MultiheadAttention(nn.Module):
         self.onnx_trace = False
         self.tpu = False
 
+        ######
+        self.softmax_type = 'normal'
+        self.mysoftmax = None
+        self.my = True
+        #######
+
     def prepare_for_onnx_export_(self):
         self.onnx_trace = True
 
@@ -107,6 +119,43 @@ class MultiheadAttention(nn.Module):
             nn.init.xavier_normal_(self.bias_k)
         if self.bias_v is not None:
             nn.init.xavier_normal_(self.bias_v)
+
+
+    def set_softmax(self, softmax_type, data_dict=None):
+            self.softmax_type = softmax_type
+
+            if self.softmax_type == 'nn':
+                exp_dict = data_dict['exp_dict']
+                div_dict = data_dict['div_dict']
+                self.mysoftmax = MySoftmax(softmax_type, exp_dict, div_dict)
+            elif self.softmax_type == 'lut':
+                exp_dict = data_dict['exp_dict']['lut']
+                div_dict = data_dict['div_dict']['lut']
+                self.mysoftmax = MySoftmax(softmax_type, exp_dict, div_dict)
+            elif self.softmax_type == 'ibert':
+                self.mysoftmax = MySoftmax(softmax_type)
+            else :
+                raise Exception('This softmax type is not supported')
+
+    def run_softmax(self, scores):
+        if self.softmax_type == 'normal':
+            return nn.Softmax(dim=-1)(scores)
+        else :
+            #import numpy
+            #p = nn.Softmax(dim=-1)(scores)
+            #_,_,_, d = p.shape
+            #p = p.view(-1,d).detach().cpu().numpy()
+
+            #real = scores.view(-1, d).detach().cpu().numpy()
+            #numpy.savetxt('data.csv', real[:100,:], delimiter=",")
+            #numpy.savetxt('fp32.csv', p[:100,:], delimiter=",")
+
+            #p = self.mysoftmax(scores).view(-1,d).detach().cpu().numpy()
+
+            #numpy.savetxt('lut.csv', p[:100,:], delimiter=",")
+            #raise Exception('For debugging')
+            return self.mysoftmax(scores)
+
 
     def forward(
         self,
@@ -145,39 +194,40 @@ class MultiheadAttention(nn.Module):
         assert embed_dim == self.embed_dim
         assert list(query.size()) == [tgt_len, bsz, embed_dim]
 
-        if (
-            not self.onnx_trace
-            and not self.tpu  # don't use PyTorch version on TPUs
-            and incremental_state is None
-            and not static_kv
-            # A workaround for quantization to work. Otherwise JIT compilation
-            # treats bias in linear module as method.
-            and not torch.jit.is_scripting()
-        ):
-            assert key is not None and value is not None
-            return F.multi_head_attention_forward(
-                query,
-                key,
-                value,
-                self.embed_dim,
-                self.num_heads,
-                torch.empty([0]),
-                torch.cat((self.q_proj.bias, self.k_proj.bias, self.v_proj.bias)),
-                self.bias_k,
-                self.bias_v,
-                self.add_zero_attn,
-                self.dropout_module.p,
-                self.out_proj.weight,
-                self.out_proj.bias,
-                self.training or self.dropout_module.apply_during_inference,
-                key_padding_mask,
-                need_weights,
-                attn_mask,
-                use_separate_proj_weight=True,
-                q_proj_weight=self.q_proj.weight,
-                k_proj_weight=self.k_proj.weight,
-                v_proj_weight=self.v_proj.weight,
-            )
+        if not self.my:
+            if (
+                not self.onnx_trace
+                and not self.tpu  # don't use PyTorch version on TPUs
+                and incremental_state is None
+                and not static_kv
+                # A workaround for quantization to work. Otherwise JIT compilation
+                # treats bias in linear module as method.
+                and not torch.jit.is_scripting()
+            ):
+                assert key is not None and value is not None
+                return F.multi_head_attention_forward(
+                    query,
+                    key,
+                    value,
+                    self.embed_dim,
+                    self.num_heads,
+                    torch.empty([0]),
+                    torch.cat((self.q_proj.bias, self.k_proj.bias, self.v_proj.bias)),
+                    self.bias_k,
+                    self.bias_v,
+                    self.add_zero_attn,
+                    self.dropout_module.p,
+                    self.out_proj.weight,
+                    self.out_proj.bias,
+                    self.training or self.dropout_module.apply_during_inference,
+                    key_padding_mask,
+                    need_weights,
+                    attn_mask,
+                    use_separate_proj_weight=True,
+                    q_proj_weight=self.q_proj.weight,
+                    k_proj_weight=self.k_proj.weight,
+                    v_proj_weight=self.v_proj.weight,
+                )
 
         if incremental_state is not None:
             saved_state = self._get_input_buffer(incremental_state)
@@ -194,6 +244,7 @@ class MultiheadAttention(nn.Module):
             q = self.q_proj(query)
             k = self.k_proj(query)
             v = self.v_proj(query)
+            
         elif self.encoder_decoder_attention:
             # encoder-decoder attention
             q = self.q_proj(query)
@@ -344,9 +395,19 @@ class MultiheadAttention(nn.Module):
         if before_softmax:
             return attn_weights, v
 
-        attn_weights_float = utils.softmax(
-            attn_weights, dim=-1, onnx_trace=self.onnx_trace
-        )
+        ##############################################################################
+        if self.my:
+            attn_weights = attn_weights.view(bsz,self.num_heads,tgt_len, src_len)
+            attn_weights_float = \
+                    self.run_softmax(attn_weights)
+            attn_weights_float = attn_weights_float.view(-1,tgt_len, src_len)
+        else:
+            attn_weights_float = utils.softmax(
+                attn_weights, dim=-1, onnx_trace=self.onnx_trace
+        )                         
+        ##############################################################################
+
+
         attn_weights = attn_weights_float.type_as(attn_weights)
         attn_probs = self.dropout_module(attn_weights)
 

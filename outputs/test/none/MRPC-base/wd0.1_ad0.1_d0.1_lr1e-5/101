@@ -1,1 +1,0 @@
-Epoch 1: OrderedDict([('loss', 0.603), ('nll_loss', 0.011), ('accuracy', 80.4), ('tp', 115.0), ('tn', 213.0), ('fp', 66.0), ('fn', 14.0), ('false', 80.0), ('wps', 32557.0), ('wpb', 851.3), ('bsz', 15.7), ('num_updates', 230)])

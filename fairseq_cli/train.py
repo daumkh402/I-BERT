@@ -82,12 +82,12 @@ def main(args):
     )
 
     #################################################################################
-    wandb.init(entity="johnbert",name=args.wandb_run_name, project=args.wandb_project_name, dir='../ssd/')
+    # wandb.init(entity="johnbert",name=args.wandb_run_name, project=args.wandb_project_name, dir='../ssd/')
     #args.validate_interval_updates = 100
     # validate_after_updates
     # validate_interval
 
-    logger.info(args)
+    # logger.info(args)
     # pdb.set_trace()
     #################################################################################
     
@@ -124,7 +124,7 @@ def main(args):
     extra_state, epoch_itr = checkpoint_utils.load_checkpoint(args, trainer)
 
     # Train until the learning rate gets too small
-    max_epoch = args.max_epoch or math.inf
+    max_epoch = args.max_epoch #or math.inf
     lr = trainer.get_lr()
     train_meter = meters.StopwatchMeter()
     train_meter.start()
@@ -232,14 +232,14 @@ def train(args, trainer, task, epoch_itr):
         ####################################################################################
         #print('step_count',  num_updates) 
         #print('train loss', log_output['loss']
-        wandb.log({'step_count' : num_updates, 'train loss' : log_output['loss'] })
+        # wandb.log({'step_count' : num_updates, 'train loss' : log_output['loss'] })
         
-        if valid_losses[0] is None:
-            pass
-            #wandb.log({'step_count' : num_updates, 'valid_loss' : eval_loss.item()})
-        else:
-            #import pdb; pdb.set_trace()
-            wandb.log({'step_count' : num_updates, 'valid_loss' : eval_loss.item(), 'valid_score' : valid_losses[0]})
+        # if valid_losses[0] is None:
+        #     pass
+        #     #wandb.log({'step_count' : num_updates, 'valid_loss' : eval_loss.item()})
+        # else:
+        #     #import pdb; pdb.set_trace()
+        #     wandb.log({'step_count' : num_updates, 'valid_loss' : eval_loss.item(), 'valid_score' : valid_losses[0]})
         ####################################################################################
 
         if should_stop:

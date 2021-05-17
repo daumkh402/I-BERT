@@ -20,7 +20,7 @@ def make_dir(args, is_large, lr):
 
     log_file = os.path.join(log_dir, log_name)
     ####
-    log_file = os.path.join(log_dir,args.iteration)
+    # log_file = os.path.join(log_dir,args.iteration)
     ####
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
@@ -199,10 +199,9 @@ if args.task == "STS-B":
 if args.max_epochs is not None:
     max_epochs = args.max_epochs
 
-total_num_updates = args.total_num_updates
+# total_num_updates = args.total_num_updates
 
 
-valid_interval_updates = str(int(int(total_num_updates) / 50))
 
 ###############################################################
 
@@ -245,9 +244,9 @@ subprocess_args = [
     '--quant-mode', args.quant_mode,
     '--force-dequant', args.force_dequant,
     ######
-    '--seed', args.seed,
-    '--wandb_project_name', args.wandb_project_name,
-    '--wandb_run_name', args.wandb_run_name
+    # '--seed', args.seed,
+    # '--wandb_project_name', args.wandb_project_name,
+    # '--wandb_run_name', args.wandb_run_name
     #####
 ]
 
@@ -264,5 +263,5 @@ else:
     subprocess_args.append('--maximize-best-checkpoint-metric')
 
 subprocess_args = subprocess_args + finetuning_args
-
+import pdb; pdb.set_trace()
 subprocess.call(subprocess_args)

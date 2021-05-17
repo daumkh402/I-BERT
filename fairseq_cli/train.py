@@ -336,6 +336,33 @@ def validate(args, trainer, task, epoch_itr, subsets):
         # log validation stats
         stats = get_valid_stats(args, trainer, agg.get_smoothed_values())
 
+        #################################################################################
+        if args.best_checkpoint_metric == 'f1':
+            tn = stats['tn']; tp = stats['tp']; fp = stats['fp']; fn = stats['fn']
+            
+            d = tp + 0.5 * (fp + fn)
+            if d == 0:
+                stats['f1'] = None
+            else:
+                f1 = 100 * tp / d
+                stats['f1'] = f1    
+            
+
+        if args.best_checkpoint_metric == 'mcc':
+            tn = stats['tn']; tp = stats['tp']; fp = stats['fp']; fn = stats['fn']
+            n = tn + tp + fn + fp
+            s = (tp + fn) / float(n)
+            p = (tp + fp) / float(n)
+
+            d = math.sqrt(p * s * (1-s) * (1-p))
+            n = tp / float(n) - s * p
+            
+            if d == 0:
+                stats['mcc'] = None
+            else:
+                mcc = 100 * n / d
+                stats['mcc'] = mcc       
+        #################################################################################
 
         progress.print(stats, tag=subset, step=trainer.get_num_updates())
         if args.log_file is not None:
@@ -348,39 +375,14 @@ def validate(args, trainer, task, epoch_itr, subsets):
 
 def get_valid_stats(args, trainer, stats):
     stats["num_updates"] = trainer.get_num_updates()
-    #################################################################################
-    if args.best_checkpoint_metric == 'f1':
-        tn = stats['tn']; tp = stats['tp']; fp = stats['fp']; fn = stats['fn']
-        
-        d = tp + 0.5 * (fp + fn)
-        if d == 0:
-            stats['f1'] = None
-        else:
-            f1 = 100 * tp / d
-            stats['f1'] = f1    
-        
 
-    if args.best_checkpoint_metric == 'mcc':
-        tn = stats['tn']; tp = stats['tp']; fp = stats['fp']; fn = stats['fn']
-        n = tn + tp + fn + fp
-        s = (tp + fn) / float(n)
-        p = (tp + fp) / float(n)
-
-        d = math.sqrt(p * s * (1-s) * (1-p))
-        n = tp / float(n) - s * p
-        
-        if d == 0:
-          stats['mcc'] = None
-        else:
-          mcc = 100 * n / d
-          stats['mcc'] = mcc       
-    #################################################################################
     if hasattr(checkpoint_utils.save_checkpoint, "best"):
         key = "best_{0}".format(args.best_checkpoint_metric)
         best_function = max if args.maximize_best_checkpoint_metric else min
-        stats[key] = best_function(
-            checkpoint_utils.save_checkpoint.best, stats[args.best_checkpoint_metric]
-        )
+        if args.best_checkpoint_metric == 'accuracy':
+            stats[key] = best_function(
+                checkpoint_utils.save_checkpoint.best, stats[args.best_checkpoint_metric]
+            )
     return stats
 
 

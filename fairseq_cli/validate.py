@@ -13,7 +13,7 @@ import torch
 
 from fairseq import checkpoint_utils, distributed_utils, options, utils
 from fairseq.logging import metrics, progress_bar
-
+import pdb
 
 logging.basicConfig(
     format='%(asctime)s | %(levelname)s | %(name)s | %(message)s',
@@ -41,7 +41,6 @@ def main(args, override_args=None):
         overrides.update(eval(getattr(override_args, 'model_overrides', '{}')))
     else:
         overrides = None
-
     # Load ensemble
     logger.info('loading model(s) from {}'.format(args.path))
     models, model_args, task = checkpoint_utils.load_model_ensemble_and_task(
@@ -114,6 +113,11 @@ def main(args, override_args=None):
             task.reduce_metrics(log_outputs, criterion)
             log_output = agg.get_smoothed_values()
 
+        if args.log_file is not None:
+            with open(args.log_file, "a") as logfile:
+                name = '-'.split(args.data)[0]
+                logfile.write("valid on {} : {}".format(name,log_output))
+                
         progress.print(log_output, tag=subset, step=i)
 
 

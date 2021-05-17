@@ -263,5 +263,4 @@ else:
     subprocess_args.append('--maximize-best-checkpoint-metric')
 
 subprocess_args = subprocess_args + finetuning_args
-import pdb; pdb.set_trace()
 subprocess.call(subprocess_args)

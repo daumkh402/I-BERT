@@ -91,6 +91,8 @@ class MultiheadAttention(nn.Module):
         ######
         self.softmax_type = 'normal'
         self.mysoftmax = None
+
+
         self.my = True
         #######
 
@@ -137,23 +139,11 @@ class MultiheadAttention(nn.Module):
             else :
                 raise Exception('This softmax type is not supported')
 
+
     def run_softmax(self, scores):
         if self.softmax_type == 'normal':
             return nn.Softmax(dim=-1)(scores)
         else :
-            #import numpy
-            #p = nn.Softmax(dim=-1)(scores)
-            #_,_,_, d = p.shape
-            #p = p.view(-1,d).detach().cpu().numpy()
-
-            #real = scores.view(-1, d).detach().cpu().numpy()
-            #numpy.savetxt('data.csv', real[:100,:], delimiter=",")
-            #numpy.savetxt('fp32.csv', p[:100,:], delimiter=",")
-
-            #p = self.mysoftmax(scores).view(-1,d).detach().cpu().numpy()
-
-            #numpy.savetxt('lut.csv', p[:100,:], delimiter=",")
-            #raise Exception('For debugging')
             return self.mysoftmax(scores)
 
 
@@ -381,14 +371,22 @@ class MultiheadAttention(nn.Module):
         if key_padding_mask is not None:
             # don't attend to padding symbols
             attn_weights = attn_weights.view(bsz, self.num_heads, tgt_len, src_len)
+
+            ############################
+            if self.softmax_type != 'normal':
+                num = -10000
+            else:
+                num = float("-inf")
+            #############################
             if not self.tpu:
                 attn_weights = attn_weights.masked_fill(
                     key_padding_mask.unsqueeze(1).unsqueeze(2).to(torch.bool),
-                    float("-inf")
+                    num
                 )
+
             else:
                 attn_weights = attn_weights.transpose(0, 2)
-                attn_weights = attn_weights.masked_fill(key_padding_mask, float('-inf'))
+                attn_weights = attn_weights.masked_fill(key_padding_mask, num)
                 attn_weights = attn_weights.transpose(0, 2)
             attn_weights = attn_weights.view(bsz * self.num_heads, tgt_len, src_len)
 
@@ -396,7 +394,7 @@ class MultiheadAttention(nn.Module):
             return attn_weights, v
 
         ##############################################################################
-        if self.my:
+        if self.softmax_type != 'normal':
             attn_weights = attn_weights.view(bsz,self.num_heads,tgt_len, src_len)
             attn_weights_float = \
                     self.run_softmax(attn_weights)

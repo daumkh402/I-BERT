@@ -276,3 +276,15 @@ class TransformerSentenceEncoder(nn.Module):
             return torch.stack(inner_states), sentence_rep
         else:
             return inner_states, sentence_rep
+
+    def set_softmax(self, softmax_type, data_dict):
+        for l in self.layers:
+            l.set_softmax(softmax_type, data_dict)
+
+    def set_gelu(self, gelu_type, data_dict):
+        for l in self.layers:
+            l.set_softmax(gelu_type, data_dict)
+
+    def set_layernorm(self, layernorm_type, data_dict):
+        for l in self.layers:
+            l.set_softmax(layernorm_type, data_dict)

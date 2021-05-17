@@ -66,20 +66,42 @@ def main(args):
     # Build model and criterion
     model = task.build_model(args)
     
-    pdb.set_trace()
-    ######
+    ########################################################################
     if args.softmax_type is not None :
         if args.softmax_type == 'nn' or args.softmax_type == 'lut' :
-            data_dict = dict()
+            softmax_data_dict = dict()
             exp_dict = torch.load(args.exp_filename)
             div_dict = torch.load(args.div_filename)
-            data_dict['exp_dict'] = exp_dict
-            data_dict['div_dict'] = div_dict
+            softmax_data_dict['exp_dict'] = exp_dict
+            softmax_data_dict['div_dict'] = div_dict
         else :
             data_dict = None
         model.set_softmax(args.softmax_type, data_dict)
 
-    ######
+    if args.gelu_type is not None :
+        if args.gelu_type == 'nn' or args.gelu_type == 'lut' :
+            gelu_data_dict = dict()
+            gelu_data_dict = torch.load(args.gelu_filename)
+        else:
+            gelu_data_dict = None  
+        model.set_gelu(args.gelu_type, gelu_data_dict)
+
+    if args.layernom_type is not None :
+        if args.gelu_type == 'nn' or args.gelu_type == 'lut' :
+            ln_data_dict = dict()
+            ln_data_dict = torch.load(args.layernorm_filename)
+        else:
+            ln_data_dict = None  
+        model.set_layernorm(args.layernorm_type, ln_data_dict)
+
+
+    freeze=True
+    if freeze:
+        for n, p in model.named_parameters():
+            if 'nn_exp' in n or 'nn_div' in n:
+                p.requires_grad = False
+    pdb.set_trace()
+    ########################################################################
 
     criterion = task.build_criterion(args)
     logger.info(model)
@@ -333,9 +355,14 @@ def validate(args, trainer, task, epoch_itr, subsets):
             n = tn + tp + fn + fp
             s = (tp + fn) / float(n)
             p = (tp + fp) / float(n)
-            mcc = 100 * (tp / float(n) - s * p) / math.sqrt(p*s*(1-s)*(1-p))
-            stats['mcc'] = mcc
 
+            denom = math.sqrt(p*s*(1-s)*(1-p))
+            num = 100 * (tp / float(n) - s * p) 
+            if denom == 0 :
+                stats['mcc'] = float('inf')
+
+            else:
+                stats['mcc'] = num / denom
 
 
         progress.print(stats, tag=subset, step=trainer.get_num_updates())

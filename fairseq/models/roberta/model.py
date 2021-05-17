@@ -228,7 +228,15 @@ class RobertaModel(FairseqEncoderModel):
                     logger.info('Overwriting ' + prefix + 'classification_heads.' + k)
                     state_dict[prefix + 'classification_heads.' + k] = v
 
+    def set_softmax(self, softmax_type, data_dict):
+        self.encoder.set_softmax(softmax_type, data_dict)
 
+    def set_gelu(self, gelu_type, data_dict):
+        self.sentence_encoder.set_gelu(gelu_type, data_dict)
+
+    def set_layernorm(self, layernorm_type, data_dict):
+        self.sentence_encoder.set_layernorm(layernorm_type, data_dict)
+        
 class RobertaLMHead(nn.Module):
     """Head for masked language modeling."""
 
@@ -354,6 +362,14 @@ class RobertaEncoder(FairseqEncoder):
         """Maximum output length supported by the encoder."""
         return self.args.max_positions
 
+    def set_softmax(self, softmax_type, data_dict):
+        self.sentence_encoder.set_softmax(softmax_type, data_dict)
+
+    def set_gelu(self, gelu_type, data_dict):
+        self.sentence_encoder.set_gelu(gelu_type, data_dict)
+
+    def set_layernorm(self, layernorm_type, data_dict):
+        self.sentence_encoder.set_layernorm(layernorm_type, data_dict)
 
 @register_model_architecture('roberta', 'roberta')
 def base_architecture(args):

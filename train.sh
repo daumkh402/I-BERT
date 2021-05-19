@@ -1,9 +1,9 @@
 export CUDA_VISIBLE_DEVICES=0 
 ROBERTA_PATH=./robera.base/model.pt
 
-for task in  "QQP" #"CoLA" #"QQP" #"CoLA" #"SST-2" #"QQP" #"RTE" 
+for task in  "MRPC" #"CoLA" #"QQP" #"CoLA" #"SST-2" #"QQP" #"RTE" 
 do
-for i in 2 3 4
+for i in 1
 do
 python run.py \
 --arch roberta_base \

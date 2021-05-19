@@ -1,0 +1,6 @@
+# ninja log v5
+0	148	1621417838156034588	/home/hs402/IBERT/FP_NPRC/build/temp.linux-x86_64-3.7/fairseq/clib/libbleu/module.o	7eafa42842e40cf1
+0	379	1621417838384026896	/home/hs402/IBERT/FP_NPRC/build/temp.linux-x86_64-3.7/fairseq/clib/libbleu/libbleu.o	6ce45d7400c7897b
+0	4132	1621417842627883673	/home/hs402/IBERT/FP_NPRC/build/temp.linux-x86_64-3.7/fairseq/data/data_utils_fast.o	8511f345c1803fd3
+0	4569	1621417847323725120	/home/hs402/IBERT/FP_NPRC/build/temp.linux-x86_64-3.7/fairseq/data/token_block_utils_fast.o	bfae2b8c90b390f
+0	16970	1621417864419147236	/home/hs402/IBERT/FP_NPRC/build/temp.linux-x86_64-3.7/fairseq/clib/libnat/edit_dist.o	e07ed69c0db0d4a4

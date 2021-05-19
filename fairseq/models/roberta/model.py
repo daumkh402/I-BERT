@@ -232,10 +232,10 @@ class RobertaModel(FairseqEncoderModel):
         self.encoder.set_softmax(softmax_type, data_dict)
 
     def set_gelu(self, gelu_type, data_dict):
-        self.sentence_encoder.set_gelu(gelu_type, data_dict)
+        self.encoder.set_gelu(gelu_type, data_dict)
 
     def set_layernorm(self, layernorm_type, data_dict):
-        self.sentence_encoder.set_layernorm(layernorm_type, data_dict)
+        self.encoder.set_layernorm(layernorm_type, data_dict)
         
 class RobertaLMHead(nn.Module):
     """Head for masked language modeling."""

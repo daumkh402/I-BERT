@@ -13,7 +13,7 @@ import torch
 
 from fairseq import checkpoint_utils, distributed_utils, options, utils
 from fairseq.logging import metrics, progress_bar
-
+import pdb
 
 logging.basicConfig(
     format='%(asctime)s | %(levelname)s | %(name)s | %(message)s',
@@ -50,6 +50,51 @@ def main(args, override_args=None):
         suffix=getattr(args, "checkpoint_suffix", ""),
     )
     model = models[0]
+
+    ########################################################################
+    args.gelu_type = None if args.gelu_type == 'None' else args.gelu_type
+    args.softmax_type = None if args.softmax_type == 'None' else args.softmax_type
+    args.layernorm_type = None if args.layernorm_type == 'None' else args.layernorm_type
+
+    # pdb.set_trace()
+    if args.softmax_type is not None :
+        if args.softmax_type == 'nn' or args.softmax_type == 'lut' :
+            data_dict = dict()
+            exp_dict = torch.load(args.exp_filename)
+            div_dict = torch.load(args.div_filename)
+            data_dict['exp_dict'] = exp_dict
+            data_dict['div_dict'] = div_dict
+        else :
+            data_dict = None
+
+        model.set_softmax(args.softmax_type, data_dict)
+
+    if args.gelu_type is not None :
+        if args.gelu_type == 'nn' or args.gelu_type == 'lut' :
+            gelu_data_dict = dict()
+            gelu_data_dict = torch.load(args.gelu_filename)
+        else:
+            gelu_data_dict = None  
+        model.set_gelu(args.gelu_type, gelu_data_dict)
+
+    if args.layernorm_type is not None :
+        if args.gelu_type == 'nn' or args.gelu_type == 'lut' :
+            ln_data_dict = dict()
+            ln_data_dict = torch.load(args.layernorm_filename)
+        else:
+            ln_data_dict = None  
+
+        model.set_layernorm(args.layernorm_type, ln_data_dict)
+
+
+    # freeze=True
+    # if freeze:
+    #     for n, p in model.named_parameters():
+    #         if 'nn_exp' in n or 'nn_div' in n:
+    #             p.requires_grad = False
+    pdb.set_trace()
+    ########################################################################
+
 
     # Move models to GPU
     for model in models:

@@ -231,7 +231,11 @@ def get_parser(desc, default_task="translation"):
     parser.add_argument('--wandb_on', type=str, choices=['True','False'])
     parser.add_argument('--exp_filename', type=str)
     parser.add_argument('--div_filename', type=str)
+    parser.add_argument('--gelu_filename', type=str)
+    parser.add_argument('--layernorm_filename', type=str)
     parser.add_argument('--softmax_type', type=str)
+    parser.add_argument('--gelu_type', type=str)
+    parser.add_argument('--layernorm_type', type=str)
     ################################################
     # fmt: off
     parser.add_argument('--no-progress-bar', action='store_true', help='disable progress bar')

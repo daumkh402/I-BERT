@@ -17,8 +17,7 @@ from fairseq.modules.fairseq_dropout import FairseqDropout
 from fairseq.modules.quant_noise import quant_noise
 
 ######
-from fairseq.modules.softmax.mysoftmax import MySoftmax
-my=True
+from fairseq.modules.mysoftmax.mysoftmax import MySoftmax
 ######
 
 
@@ -372,16 +371,11 @@ class MultiheadAttention(nn.Module):
             # don't attend to padding symbols
             attn_weights = attn_weights.view(bsz, self.num_heads, tgt_len, src_len)
 
-            ############################
-            if self.softmax_type != 'normal':
-                num = -10000
-            else:
-                num = float("-inf")
-            #############################
+
             if not self.tpu:
                 attn_weights = attn_weights.masked_fill(
                     key_padding_mask.unsqueeze(1).unsqueeze(2).to(torch.bool),
-                    num
+                   float("-inf")
                 )
 
             else:

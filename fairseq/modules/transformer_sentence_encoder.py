@@ -283,8 +283,8 @@ class TransformerSentenceEncoder(nn.Module):
 
     def set_gelu(self, gelu_type, data_dict):
         for l in self.layers:
-            l.set_softmax(gelu_type, data_dict)
+            l.set_gelu(gelu_type, data_dict)
 
     def set_layernorm(self, layernorm_type, data_dict):
         for l in self.layers:
-            l.set_softmax(layernorm_type, data_dict)
+            l.set_layernorm(layernorm_type, data_dict)

@@ -17,8 +17,9 @@ from fairseq.modules.quant_noise import quant_noise
 from fairseq.modules.fairseq_dropout import FairseqDropout
 
 ######
-from fairseq.modules.gelu.mygelu import MyGelu
-from fairseq.modules.layernorm.mylayernorm import MyLayernorm
+import pdb
+from fairseq.modules.mygelu.mygelu import MyGelu
+from fairseq.modules.mylayernorm.mylayernorm import MyLayernorm
 ######
 
 class TransformerSentenceEncoderLayer(nn.Module):
@@ -142,19 +143,20 @@ class TransformerSentenceEncoderLayer(nn.Module):
         x = self.self_attn_layer_norm(x)
 
         residual = x
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
 
-        if self.gelu_type == 'normal':
+        if self.gelu_type == 'normal' or self.gelu_type is None:
             x = self.activation_fn(self.fc1(x))
+            pdb.set_trace()
         else:
-            x = self.mylayernorm(self.fc1(x))
+            x = self.mygelu(self.fc1(x))
 
         x = self.activation_dropout_module(x)
         x = self.fc2(x)
         x = self.dropout_module(x)
         x = residual + x
 
-        if self.layernorm_type == 'normal':
+        if self.layernorm_type == 'normal'  or self.layernorm_type is None:
             x = self.final_layer_norm(x)
         else:
             x = self.mylayernorm(x)
@@ -181,7 +183,7 @@ class TransformerSentenceEncoderLayer(nn.Module):
             else :
                 raise Exception('This gelu type is not supported')
 
-    def set_layernrom(self, layernorm_type, data_dict=None):
+    def set_layernorm(self, layernorm_type, data_dict=None):
             self.layernorm_type = layernorm_type
 
             if self.layernorm_type == 'nn':

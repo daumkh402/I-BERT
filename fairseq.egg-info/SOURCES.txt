@@ -1,6 +1,5 @@
 LICENSE
 README.md
-pyproject.toml
 setup.py
 examples/__init__.py
 examples/noisychannel/__init__.py
@@ -86,6 +85,7 @@ fairseq/benchmark/dummy_model.py
 fairseq/benchmark/dummy_mt.py
 fairseq/clib/libbleu/libbleu.cpp
 fairseq/clib/libbleu/module.cpp
+fairseq/clib/libnat/edit_dist.cpp
 fairseq/criterions/__init__.py
 fairseq/criterions/adaptive_loss.py
 fairseq/criterions/composite_loss.py
